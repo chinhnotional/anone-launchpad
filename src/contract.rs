@@ -5,9 +5,8 @@ use cosmwasm_std::{
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, WasmMsg, SubMsg, Response
 };
 use cw2::set_contract_version;
-use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, MintMsg};
 use cw_utils::{parse_reply_instantiate_data};
-use anone_cw721::msg::InstantiateMsg as An721InstantiateMsg;
+use anone_cw721::msg::{InstantiateMsg as An721InstantiateMsg, ExecuteMsg as An721ExecuteMsg, MintMsg as An721MintMsg};
 use url::Url;
 
 use crate::error::ContractError;
@@ -114,22 +113,25 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint {} => execute_mint_sender(deps, env, info),
+        ExecuteMsg::Mint {model_id, size} => execute_mint_sender(deps, info, model_id, size),
         ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
-        ExecuteMsg::MintTo { recipient } => execute_mint_to(deps, info, recipient),
+        ExecuteMsg::MintTo { recipient, model_id, size } => execute_mint_to(deps, info, recipient, model_id, size),
         ExecuteMsg::MintFor {
             token_id,
             recipient,
-        } => execute_mint_for(deps, info, token_id, recipient),
+            model_id,
+            size
+        } => execute_mint_for(deps, info, token_id, recipient, model_id, size),
     }
 }
 
 pub fn execute_mint_sender(
     deps: DepsMut,
-    _env: Env,
     info: MessageInfo,
+    model_id: String,
+    size: String
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
@@ -140,13 +142,15 @@ pub fn execute_mint_sender(
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, info, action, false, None, None)
+    _execute_mint(deps, info, action, false, None, None, model_id, size)
 }
 
 pub fn execute_mint_to(
     deps: DepsMut,
     info: MessageInfo,
     recipient: String,
+    model_id: String,
+    size: String
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
     let config = CONFIG.load(deps.storage)?;
@@ -159,7 +163,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, info, action, true, Some(recipient), None)
+    _execute_mint(deps, info, action, true, Some(recipient), None, model_id, size)
 }
 
 pub fn execute_mint_for(
@@ -167,6 +171,8 @@ pub fn execute_mint_for(
     info: MessageInfo,
     token_id: u32,
     recipient: String,
+    model_id: String,
+    size: String
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
     let config = CONFIG.load(deps.storage)?;
@@ -179,7 +185,7 @@ pub fn execute_mint_for(
         ));
     }
 
-    _execute_mint(deps, info, action, true, Some(recipient), Some(token_id))
+    _execute_mint(deps, info, action, true, Some(recipient), Some(token_id), model_id, size)
 }
 
 // Generalize checks and mint message creation
@@ -193,6 +199,8 @@ fn _execute_mint(
     _is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
+    model_id: String,
+    size: String
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let an721_address = AN721_ADDRESS.load(deps.storage)?;
@@ -229,10 +237,11 @@ fn _execute_mint(
     };
 
     // Create mint msgs
-    let mint_msg = Cw721ExecuteMsg::Mint(MintMsg::<Empty> {
+    let mint_msg = An721ExecuteMsg::Mint(An721MintMsg::<Empty> {
         token_id: mintable_token_id.to_string(),
         owner: recipient_addr.to_string(),
-        token_uri: Some(format!("{}/{}", config.base_token_uri, mintable_token_id)),
+        model_id: model_id,
+        size: size,
         extension: Empty {},
     });
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {

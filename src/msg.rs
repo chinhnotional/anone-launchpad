@@ -15,10 +15,24 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Mint {},
-    UpdatePerAddressLimit { per_address_limit: u32 },
-    MintTo { recipient: String },
-    MintFor { token_id: u32, recipient: String },
+    Mint {
+        model_id: String,
+        size: String,
+    },
+    UpdatePerAddressLimit {
+        per_address_limit: u32,
+    },
+    MintTo {
+        recipient: String,
+        model_id: String,
+        size: String,
+    },
+    MintFor {
+        token_id: u32,
+        recipient: String,
+        model_id: String,
+        size: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
