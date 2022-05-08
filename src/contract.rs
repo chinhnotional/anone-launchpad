@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env,
+    to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env,
     MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, WasmMsg, SubMsg, Response
 };
 use cw2::set_contract_version;
@@ -27,7 +27,7 @@ const INSTANTIATE_AN721_REPLY_ID: u64 = 1;
 
 // governance parameters
 pub const NATIVE_DENOM: &str = "uan1";
-const MAX_TOKEN_LIMIT: u32 = 10000;
+const MAX_TOKEN_LIMIT: u32 = 100000;
 const MAX_PER_ADDRESS_LIMIT: u32 = 50;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -124,7 +124,39 @@ pub fn execute(
             model_id,
             size
         } => execute_mint_for(deps, info, token_id, recipient, model_id, size),
+        ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
+}
+
+pub fn execute_withdraw(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    if config.admin != info.sender {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    };
+
+    // query balance from the contract
+    let balance = deps
+        .querier
+        .query_balance(env.contract.address, NATIVE_DENOM)?;
+    if balance.amount.is_zero() {
+        return Err(ContractError::ZeroBalance {});
+    }
+
+    // send contract balance to creator
+    let send_msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: info.sender.to_string(),
+        amount: vec![balance],
+    });
+
+    Ok(Response::default()
+        .add_attribute("action", "withdraw")
+        .add_message(send_msg))
 }
 
 pub fn execute_mint_sender(

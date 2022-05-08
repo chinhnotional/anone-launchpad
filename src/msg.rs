@@ -33,6 +33,7 @@ pub enum ExecuteMsg {
         model_id: String,
         size: String,
     },
+    Withdraw {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
