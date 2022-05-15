@@ -1,5 +1,5 @@
 use anone_cw721::msg::{
-    ExecuteMsg as An721ExecuteMsg, InstantiateMsg as An721InstantiateMsg, MintMsg as An721MintMsg,
+    ExecuteMsg as An721ExecuteMsg, InstantiateMsg as An721InstantiateMsg, MintMsg as An721MintMsg, CreateShoeModelMsg
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -107,10 +107,6 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Mint { model_id, size } => execute_mint_sender(deps, info, model_id, size),
-        ExecuteMsg::UpdatePerModelShoeLimit { per_address_limit } => {
-            execute_update_per_address_limit(deps, env, info, per_address_limit)
-        }
-        ExecuteMsg::UpdateAdmin { new_admin } => execute_update_admin(deps, env, info, new_admin),
         ExecuteMsg::MintTo {
             recipient,
             model_id,
@@ -122,6 +118,11 @@ pub fn execute(
             model_id,
             size,
         } => execute_mint_for(deps, info, token_id, recipient, model_id, size),
+        ExecuteMsg::CreateModel { model_id, model_uri } => execute_create_model(deps, info, model_id, model_uri),
+        ExecuteMsg::UpdatePerModelShoeLimit { per_address_limit } => {
+            execute_update_per_address_limit(deps, env, info, per_address_limit)
+        }
+        ExecuteMsg::UpdateAdmin { new_admin } => execute_update_admin(deps, env, info, new_admin),
         ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
 }
@@ -155,6 +156,47 @@ pub fn execute_withdraw(
     Ok(Response::default()
         .add_attribute("action", "withdraw")
         .add_message(send_msg))
+}
+
+pub fn execute_create_model(
+    deps: DepsMut,
+    info: MessageInfo,
+    model_id: String,
+    model_uri: String,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let action = "create_model";
+
+    // Check only admin
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    let an721_address = AN721_ADDRESS.load(deps.storage)?;
+    let mut msgs: Vec<CosmosMsg<Empty>> = vec![];
+
+
+    // Create create_model msgs
+    let create_model_msg = An721ExecuteMsg::CreateShoeModel(CreateShoeModelMsg::<Empty> {
+        model_id: model_id.clone(),
+        owner: info.sender.clone().to_string(),
+        model_uri: model_uri.clone(),
+        extension: Empty {},
+    });
+    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: an721_address.to_string(),
+        msg: to_binary(&create_model_msg)?,
+        funds: vec![],
+    });
+    msgs.append(&mut vec![msg]);
+    Ok(Response::default()
+        .add_attribute("action", action)
+        .add_attribute("sender", info.sender)
+        .add_attribute("model_id", model_id)
+        .add_attribute("owner", config.admin.to_string())
+        .add_messages(msgs))
 }
 
 pub fn execute_mint_sender(

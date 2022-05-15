@@ -18,12 +18,6 @@ pub enum ExecuteMsg {
         model_id: String,
         size: String,
     },
-    UpdatePerModelShoeLimit {
-        per_address_limit: u32,
-    },
-    UpdateAdmin {
-        new_admin: String,
-    },
     MintTo {
         recipient: String,
         model_id: String,
@@ -34,6 +28,16 @@ pub enum ExecuteMsg {
         recipient: String,
         model_id: String,
         size: String,
+    },
+    CreateModel {
+        model_id: String,
+        model_uri: String
+    },
+    UpdatePerModelShoeLimit {
+        per_address_limit: u32,
+    },
+    UpdateAdmin {
+        new_admin: String,
     },
     Withdraw {},
 }
