@@ -7,7 +7,6 @@ use cw_storage_plus::{Item, Map};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
     pub admin: Addr,
-    pub base_token_uri: String,
     pub num_tokens: u32,
     pub an721_code_id: u64,
     pub per_address_limit: u32,

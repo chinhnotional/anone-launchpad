@@ -1,23 +1,23 @@
+use anone_cw721::msg::{
+    ExecuteMsg as An721ExecuteMsg, InstantiateMsg as An721InstantiateMsg, MintMsg as An721MintMsg,
+};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env,
-    MessageInfo, Order, Reply, ReplyOn, StdError, StdResult, WasmMsg, SubMsg, Response
+    to_binary, Addr, BankMsg, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
-use cw_utils::{parse_reply_instantiate_data};
-use anone_cw721::msg::{InstantiateMsg as An721InstantiateMsg, ExecuteMsg as An721ExecuteMsg, MintMsg as An721MintMsg};
-use url::Url;
+use cw_utils::parse_reply_instantiate_data;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse,
-    MintableNumTokensResponse, QueryMsg,
+    ConfigResponse, ExecuteMsg, InstantiateMsg, MintCountResponse, MintableNumTokensResponse,
+    QueryMsg,
 };
 use crate::state::{
-    Config, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS, AN721_ADDRESS,
+    Config, AN721_ADDRESS, CONFIG, MINTABLE_NUM_TOKENS, MINTABLE_TOKEN_IDS, MINTER_ADDRS,
 };
-
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:anone-launchpad";
@@ -56,18 +56,11 @@ pub fn instantiate(
         });
     }
 
-    // Check that base_token_uri is a valid IPFS uri
-    let parsed_token_uri = Url::parse(&msg.base_token_uri)?;
-    if parsed_token_uri.scheme() != "ipfs" {
-        return Err(ContractError::InvalidBaseTokenURI {});
-    }
-
     let config = Config {
         admin: info.sender.clone(),
-        base_token_uri: msg.base_token_uri,
         num_tokens: msg.num_tokens,
         an721_code_id: msg.an721_code_id,
-        per_address_limit: msg.per_address_limit
+        per_address_limit: msg.per_address_limit,
     };
     CONFIG.save(deps.storage, &config)?;
     MINTABLE_NUM_TOKENS.save(deps.storage, &msg.num_tokens)?;
@@ -113,16 +106,21 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint {model_id, size} => execute_mint_sender(deps, info, model_id, size),
-        ExecuteMsg::UpdatePerAddressLimit { per_address_limit } => {
+        ExecuteMsg::Mint { model_id, size } => execute_mint_sender(deps, info, model_id, size),
+        ExecuteMsg::UpdatePerModelShoeLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
-        ExecuteMsg::MintTo { recipient, model_id, size } => execute_mint_to(deps, info, recipient, model_id, size),
+        ExecuteMsg::UpdateAdmin { new_admin } => execute_update_admin(deps, env, info, new_admin),
+        ExecuteMsg::MintTo {
+            recipient,
+            model_id,
+            size,
+        } => execute_mint_to(deps, info, recipient, model_id, size),
         ExecuteMsg::MintFor {
             token_id,
             recipient,
             model_id,
-            size
+            size,
         } => execute_mint_for(deps, info, token_id, recipient, model_id, size),
         ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
@@ -163,7 +161,7 @@ pub fn execute_mint_sender(
     deps: DepsMut,
     info: MessageInfo,
     model_id: String,
-    size: String
+    size: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let action = "mint_sender";
@@ -182,7 +180,7 @@ pub fn execute_mint_to(
     info: MessageInfo,
     recipient: String,
     model_id: String,
-    size: String
+    size: String,
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
     let config = CONFIG.load(deps.storage)?;
@@ -195,7 +193,16 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(deps, info, action, true, Some(recipient), None, model_id, size)
+    _execute_mint(
+        deps,
+        info,
+        action,
+        true,
+        Some(recipient),
+        None,
+        model_id,
+        size,
+    )
 }
 
 pub fn execute_mint_for(
@@ -204,7 +211,7 @@ pub fn execute_mint_for(
     token_id: u32,
     recipient: String,
     model_id: String,
-    size: String
+    size: String,
 ) -> Result<Response, ContractError> {
     let recipient = deps.api.addr_validate(&recipient)?;
     let config = CONFIG.load(deps.storage)?;
@@ -217,7 +224,16 @@ pub fn execute_mint_for(
         ));
     }
 
-    _execute_mint(deps, info, action, true, Some(recipient), Some(token_id), model_id, size)
+    _execute_mint(
+        deps,
+        info,
+        action,
+        true,
+        Some(recipient),
+        Some(token_id),
+        model_id,
+        size,
+    )
 }
 
 // Generalize checks and mint message creation
@@ -232,7 +248,7 @@ fn _execute_mint(
     recipient: Option<Addr>,
     token_id: Option<u32>,
     model_id: String,
-    size: String
+    size: String,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
     let an721_address = AN721_ADDRESS.load(deps.storage)?;
@@ -327,6 +343,28 @@ pub fn execute_update_per_address_limit(
         .add_attribute("limit", per_address_limit.to_string()))
 }
 
+pub fn execute_update_admin(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    new_admin: String,
+) -> Result<Response, ContractError> {
+    let mut config = CONFIG.load(deps.storage)?;
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    let admin = deps.api.addr_validate(&new_admin)?;
+    config.admin = admin;
+    CONFIG.save(deps.storage, &config)?;
+    Ok(Response::new()
+        .add_attribute("action", "update_admin")
+        .add_attribute("sender", info.sender)
+        .add_attribute("new_admin", new_admin.to_string()))
+}
+
 fn mint_count(deps: Deps, info: &MessageInfo) -> Result<u32, StdError> {
     let mint_count = (MINTER_ADDRS
         .key(info.sender.clone())
@@ -350,7 +388,6 @@ fn query_config(deps: Deps) -> StdResult<ConfigResponse> {
 
     Ok(ConfigResponse {
         admin: config.admin.to_string(),
-        base_token_uri: config.base_token_uri,
         an721_address: an721_address.to_string(),
         an721_code_id: config.an721_code_id,
         num_tokens: config.num_tokens,

@@ -5,11 +5,10 @@ use anone_cw721::msg::InstantiateMsg as An721InstantiateMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    pub base_token_uri: String,
     pub num_tokens: u32,
     pub an721_code_id: u64,
     pub an721_instantiate_msg: An721InstantiateMsg,
-    pub per_address_limit: u32,
+    pub per_address_limit: u32
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -19,8 +18,11 @@ pub enum ExecuteMsg {
         model_id: String,
         size: String,
     },
-    UpdatePerAddressLimit {
+    UpdatePerModelShoeLimit {
         per_address_limit: u32,
+    },
+    UpdateAdmin {
+        new_admin: String,
     },
     MintTo {
         recipient: String,
@@ -47,7 +49,6 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConfigResponse {
     pub admin: String,
-    pub base_token_uri: String,
     pub num_tokens: u32,
     pub per_address_limit: u32,
     pub an721_address: String,
