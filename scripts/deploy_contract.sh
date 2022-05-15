@@ -10,9 +10,9 @@ SLEEP_TIME="15s"
 
 CREATOR=$(anoned keys show $ACCOUNT -a)
 
-INIT="{\"an721_code_id\": 74, \"an721_instantiate_msg\":{\"name\": \"Test Collection\", \"symbol\": \"TEST\", \"minter\": \"$CREATOR\", \"collection_info\": {\"creator\": \"$CREATOR\", \"description\": \"An awesome NFT series\", \"image\": \"ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png\", \"royalty_info\":{\"payment_address\": \"$CREATOR\", \"share\":\"0.1\"}}}, \"num_tokens\": 100, \"per_address_limit\": 3}"
+INIT="{\"an721_code_id\": 73, \"an721_instantiate_msg\":{\"name\": \"Test Collection\", \"symbol\": \"TEST\", \"minter\": \"$CREATOR\", \"collection_info\": {\"creator\": \"$CREATOR\", \"description\": \"An awesome NFT series\", \"image\": \"ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png\", \"royalty_info\":{\"payment_address\": \"$CREATOR\", \"share\":\"0.1\"}}}, \"num_tokens\": 100, \"per_address_limit\": 3}"
 echo $INIT
-INIT_JSON=$(anoned tx wasm instantiate "76" "$INIT" --from "$ACCOUNT" --label "anone-launchpad" -y --chain-id "$CHAINID" --node "$NODE" --gas 3000000 --fees 100000uan1 -o json)
+INIT_JSON=$(anoned tx wasm instantiate "79" "$INIT" --from "$ACCOUNT" --label "anone-launchpad" -y --chain-id "$CHAINID" --node "$NODE" --gas 3000000 --fees 100000uan1 -o json)
 
 echo "INIT_JSON = $INIT_JSON"
 

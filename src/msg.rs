@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use anone_cw721::msg::InstantiateMsg as An721InstantiateMsg;
+use anone_cw721::msg::{InstantiateMsg as An721InstantiateMsg, RoyaltyInfoResponse};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -38,6 +38,12 @@ pub enum ExecuteMsg {
     },
     UpdateAdmin {
         new_admin: String,
+    },
+    UpdateCollectionInfo {
+        description: Option<String>,
+        external_link: Option<String>,
+        image: Option<String>,
+        royalty_info: Option<RoyaltyInfoResponse>,
     },
     Withdraw {},
 }

@@ -3,14 +3,15 @@
 NODE="http://65.108.128.139:2281"
 CHAINID="anone-testnet-1"
 SLEEP_TIME="15s"
-CONTRACT_MINTER="one1tm3f5ph05k0wh02d57zddked4pztczsdxrwp22rq9t7afd7a6dlsu4nng7"
-CONTRACT_AN721="one1erul6xyq0gk6ws98ncj7lnq9l4jn4gnnu9we73gdz78yyl2lr7qq7vulp7"
+CONTRACT_MINTER="one16rhma65e6k4yclpqp3652w0cgh6l6engdrhrusy5ftyjsvrhgkwqkncrtu"
+CONTRACT_AN721="one14h9jdcg8ke8vnech25erz8v98utc6vaneaph3rlpx627nas4jt3s7jv0ur"
 
 
 # CHANGE ONLY THIS
-OWNER="Test"
-
-MINT="{\"mint\": {}}"
+OWNER="Developer"
+MODEL_ID="$1"
+SIZE="$2"
+MINT="{\"mint\": {\"model_id\":\"$MODEL_ID\", \"size\":\"$SIZE\"}}"
 
 echo $MINT
 

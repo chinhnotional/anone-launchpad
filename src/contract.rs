@@ -1,5 +1,6 @@
 use anone_cw721::msg::{
-    ExecuteMsg as An721ExecuteMsg, InstantiateMsg as An721InstantiateMsg, MintMsg as An721MintMsg, CreateShoeModelMsg
+    CreateShoeModelMsg, ExecuteMsg as An721ExecuteMsg, InstantiateMsg as An721InstantiateMsg,
+    MintMsg as An721MintMsg, RoyaltyInfoResponse,
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -9,7 +10,6 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
-use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -119,10 +119,26 @@ pub fn execute(
             model_id,
             size,
         } => execute_mint_for(deps, info, token_id, recipient, model_id, size),
-        ExecuteMsg::CreateModel { model_id, model_uri } => execute_create_model(deps, info, model_id, model_uri),
+        ExecuteMsg::CreateModel {
+            model_id,
+            model_uri,
+        } => execute_create_model(deps, info, model_id, model_uri),
         ExecuteMsg::UpdatePerModelShoeLimit { per_address_limit } => {
             execute_update_per_address_limit(deps, env, info, per_address_limit)
         }
+        ExecuteMsg::UpdateCollectionInfo {
+            description,
+            external_link,
+            image,
+            royalty_info,
+        } => execute_update_collection_info(
+            deps,
+            info,
+            description,
+            external_link,
+            image,
+            royalty_info,
+        ),
         ExecuteMsg::UpdateAdmin { new_admin } => execute_update_admin(deps, env, info, new_admin),
         ExecuteMsg::Withdraw {} => execute_withdraw(deps, env, info),
     }
@@ -176,32 +192,24 @@ pub fn execute_create_model(
     }
 
     let an721_address = AN721_ADDRESS.load(deps.storage)?;
-    let mut msgs: Vec<CosmosMsg<Empty>> = vec![];
-
-    let uri = Url::parse(&model_uri)?;
-        if uri.scheme() != "ipfs" {
-            return Err(ContractError::InvalidBaseURI {});
-        }
-
     // Create create_model msgs
     let create_model_msg = An721ExecuteMsg::CreateShoeModel(CreateShoeModelMsg::<Empty> {
         model_id: model_id.clone(),
         owner: info.sender.clone().to_string(),
-        model_uri: uri.to_string(),
+        model_uri: model_uri,
         extension: Empty {},
     });
-    let msg = CosmosMsg::Wasm(WasmMsg::Execute {
+    let msg: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: an721_address.to_string(),
         msg: to_binary(&create_model_msg)?,
         funds: vec![],
     });
-    msgs.append(&mut vec![msg]);
     Ok(Response::default()
         .add_attribute("action", action)
         .add_attribute("sender", info.sender)
         .add_attribute("model_id", model_id)
         .add_attribute("owner", config.admin.to_string())
-        .add_messages(msgs))
+        .add_message(msg))
 }
 
 pub fn execute_mint_sender(
@@ -240,15 +248,7 @@ pub fn execute_mint_to(
         ));
     }
 
-    _execute_mint(
-        deps,
-        info,
-        action,
-        Some(recipient),
-        None,
-        model_id,
-        size,
-    )
+    _execute_mint(deps, info, action, Some(recipient), None, model_id, size)
 }
 
 pub fn execute_mint_for(
@@ -385,6 +385,44 @@ pub fn execute_update_per_address_limit(
         .add_attribute("action", "update_per_address_limit")
         .add_attribute("sender", info.sender)
         .add_attribute("limit", per_address_limit.to_string()))
+}
+
+pub fn execute_update_collection_info(
+    deps: DepsMut,
+    info: MessageInfo,
+    description: Option<String>,
+    external_link: Option<String>,
+    image: Option<String>,
+    royalty_info: Option<RoyaltyInfoResponse>,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let action = "update_collection_info";
+
+    // Check only admin
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized(
+            "Sender is not an admin".to_owned(),
+        ));
+    }
+
+    let an721_address = AN721_ADDRESS.load(deps.storage)?;
+    // Create create_model msgs
+    let update_collection_info_msg: An721ExecuteMsg<Empty> =
+        An721ExecuteMsg::ModifyCollectionInfo {
+            description: description.clone(),
+            external_link: external_link.clone(),
+            image: image.clone(),
+            royalty_info: royalty_info.clone(),
+        };
+    let msg: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: an721_address.to_string(),
+        msg: to_binary(&update_collection_info_msg)?,
+        funds: vec![],
+    });
+    Ok(Response::default()
+        .add_attribute("action", action)
+        .add_attribute("sender", info.sender)
+        .add_message(msg))
 }
 
 pub fn execute_update_admin(
