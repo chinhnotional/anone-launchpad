@@ -9,6 +9,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw_utils::parse_reply_instantiate_data;
+use url::Url;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -177,12 +178,16 @@ pub fn execute_create_model(
     let an721_address = AN721_ADDRESS.load(deps.storage)?;
     let mut msgs: Vec<CosmosMsg<Empty>> = vec![];
 
+    let uri = Url::parse(&model_uri)?;
+        if uri.scheme() != "ipfs" {
+            return Err(ContractError::InvalidBaseURI {});
+        }
 
     // Create create_model msgs
     let create_model_msg = An721ExecuteMsg::CreateShoeModel(CreateShoeModelMsg::<Empty> {
         model_id: model_id.clone(),
         owner: info.sender.clone().to_string(),
-        model_uri: model_uri.clone(),
+        model_uri: uri.to_string(),
         extension: Empty {},
     });
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {

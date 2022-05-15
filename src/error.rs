@@ -50,8 +50,8 @@ pub enum ContractError {
     #[error("Instantiate an721 error")]
     InstantiateAn721Error {},
 
-    #[error("Invalid base token URI (must be an IPFS URI)")]
-    InvalidBaseTokenURI {},
+    #[error("Invalid base URI (must be an IPFS URI)")]
+    InvalidBaseURI {},
 
     #[error("Minting has not started yet")]
     BeforeMintStartTime {},
@@ -70,10 +70,11 @@ pub enum ContractError {
 
     #[error("{0}")]
     Payment(#[from] PaymentError),
+    
 }
 
 impl From<ParseError> for ContractError {
     fn from(_err: ParseError) -> ContractError {
-        ContractError::InvalidBaseTokenURI {}
+        ContractError::InvalidBaseURI {}
     }
 }
