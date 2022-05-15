@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "anone-cw721"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "693a3cf8d88afbef69f5261e47dde41b4b37d99eeb82e08f517bd746c8fc70f3"
+checksum = "ad6eda266b4e077e4ef62cede3eef60f27174ddaabafd7d19a233ac4a2f133b8"
 dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
@@ -14,6 +14,25 @@ dependencies = [
  "cw-utils 0.12.1",
  "cw2 0.12.1",
  "cw721",
+ "schemars",
+ "serde",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "anone-launchpad"
+version = "0.1.0"
+dependencies = [
+ "anone-cw721",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus 0.12.1",
+ "cw-utils 0.12.1",
+ "cw2 0.12.1",
+ "cw721",
+ "cw721-base",
  "schemars",
  "serde",
  "thiserror",
@@ -452,25 +471,6 @@ name = "matches"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f"
-
-[[package]]
-name = "new-anone-minter"
-version = "0.1.0"
-dependencies = [
- "anone-cw721",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cosmwasm-storage",
- "cw-storage-plus 0.12.1",
- "cw-utils 0.12.1",
- "cw2 0.12.1",
- "cw721",
- "cw721-base",
- "schemars",
- "serde",
- "thiserror",
- "url",
-]
 
 [[package]]
 name = "opaque-debug"

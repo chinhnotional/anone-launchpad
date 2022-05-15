@@ -5,14 +5,14 @@ NODE="http://65.108.128.139:2281"
 #ACCOUNT="test"
 ACCOUNT="Developer"
 CHAINID="anone-testnet-1"
-CONTRACT_DIR="artifacts/anone_minter.wasm"
+CONTRACT_DIR="artifacts/anone_launchpad.wasm"
 SLEEP_TIME="15s"
 
 CREATOR=$(anoned keys show $ACCOUNT -a)
 
-INIT="{\"an721_code_id\": 42, \"an721_instantiate_msg\":{\"name\": \"Test Collection\", \"symbol\": \"TEST\", \"minter\": \"$CREATOR\", \"collection_info\": {\"creator\": \"$CREATOR\", \"description\": \"An awesome NFT series\", \"image\": \"ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png\", \"royalty_info\":{\"payment_address\": \"$CREATOR\", \"share\":\"0.1\"}}}, \"base_token_uri\": \"ipfs://bafybeicmnw2cuwjycu3ud2hxpt2pjc6o3tk4laeyzdciebrb4igcdapbs4/galaxyrVSptb\", \"num_tokens\": 5, \"per_address_limit\": 1}"
+INIT="{\"an721_code_id\": 74, \"an721_instantiate_msg\":{\"name\": \"Test Collection\", \"symbol\": \"TEST\", \"minter\": \"$CREATOR\", \"collection_info\": {\"creator\": \"$CREATOR\", \"description\": \"An awesome NFT series\", \"image\": \"ipfs://bafybeigi3bwpvyvsmnbj46ra4hyffcxdeaj6ntfk5jpic5mx27x6ih2qvq/images/1.png\", \"royalty_info\":{\"payment_address\": \"$CREATOR\", \"share\":\"0.1\"}}}, \"base_token_uri\": \"ipfs://bafybeicmnw2cuwjycu3ud2hxpt2pjc6o3tk4laeyzdciebrb4igcdapbs4/galaxyrVSptb\", \"num_tokens\": 5, \"per_address_limit\": 1}"
 echo $INIT
-INIT_JSON=$(anoned tx wasm instantiate "50" "$INIT" --from "$ACCOUNT" --label "anone-minter" -y --chain-id "$CHAINID" --node "$NODE" --gas 3000000 --fees 100000uan1 -o json)
+INIT_JSON=$(anoned tx wasm instantiate "50" "$INIT" --from "$ACCOUNT" --label "anone-launchpad" -y --chain-id "$CHAINID" --node "$NODE" --gas 3000000 --fees 100000uan1 -o json)
 
 echo "INIT_JSON = $INIT_JSON"
 
