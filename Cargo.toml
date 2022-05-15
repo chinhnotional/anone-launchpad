@@ -1,6 +1,6 @@
 [package]
-name = "new-anone-minter"
-description = "Create your own NFT collection contract with anone-minter"
+name = "anone-launchpad"
+description = "This contract is used to create a launch pad for an nft collection on Another-1 project."
 license = "Apache-2.0"
 version = "0.1.0"
 authors = ["Chinh D. Nguyen <eyescryptoinsights@gmail.com>"]
@@ -36,7 +36,7 @@ schemars = "0.8"
 serde = { version = "1.0.130", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.30" }
 url = "2.2.2"
-anone-cw721 = { version = "0.2.0", features = ["library"] }
+anone-cw721 = { version = "0.3.0", features = ["library"] }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "1.0.0-beta3" }
