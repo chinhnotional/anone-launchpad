@@ -172,7 +172,7 @@ pub fn execute_mint_sender(
         return Err(ContractError::MaxPerAddressLimitExceeded {});
     }
 
-    _execute_mint(deps, info, action, false, None, None, model_id, size)
+    _execute_mint(deps, info, action, None, None, model_id, size)
 }
 
 pub fn execute_mint_to(
@@ -197,7 +197,6 @@ pub fn execute_mint_to(
         deps,
         info,
         action,
-        true,
         Some(recipient),
         None,
         model_id,
@@ -228,7 +227,6 @@ pub fn execute_mint_for(
         deps,
         info,
         action,
-        true,
         Some(recipient),
         Some(token_id),
         model_id,
@@ -244,7 +242,6 @@ fn _execute_mint(
     deps: DepsMut,
     info: MessageInfo,
     action: &str,
-    _is_admin: bool,
     recipient: Option<Addr>,
     token_id: Option<u32>,
     model_id: String,
